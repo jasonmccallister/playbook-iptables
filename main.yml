@@ -43,7 +43,7 @@
 
   - name: Save iptables
     raw: iptables-save
-	notify: restart iptables
+    notify: restart iptables
 
   handlers:
 
