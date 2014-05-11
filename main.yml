@@ -1,0 +1,51 @@
+---
+- hosts: "{{ my_hosts }}"
+  remote_user: root
+  sudo: yes
+
+  tasks:
+
+  - name: Set default policy to drop
+    raw: iptables -P INPUT DROP
+    tags: firewall
+
+  - name: Drop null packets
+    raw: iptables -A INPUT -p tcp --tcp-flags ALL NONE -j DROP
+    tags: firewall
+
+  - name: Drop syn-flood attacks
+    raw: iptables -A INPUT -p tcp ! --syn -m state --state NEW -j DROP
+    tags: firewall
+
+  - name: Drop xmas/recon packets
+    raw: iptables -A INPUT -p tcp --tcp-flags ALL ALL -j DROP
+    tags: firewall
+
+  - name: Accept localhost interface
+    raw: iptables -A INPUT -i lo -j ACCEPT
+    tags: firewall
+
+  - name: Accept http traffic
+    raw: iptables -A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+    tags: firewall
+
+  - name: Accept https traffic
+    raw: iptables -A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+    tags: firewall
+
+  - name: Accept ssh traffic
+    raw: iptables -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+    tags: firewall
+
+  - name: Accept outgoing traffic
+    raw: iptables -I INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+    tags: firewall
+
+  - name: Save iptables
+    raw: iptables-save
+	notify: restart iptables
+
+  handlers:
+
+  - name: restart iptables
+    service: name=iptables state=restarted
